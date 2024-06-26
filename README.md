@@ -29,8 +29,8 @@ Este proyecto demuestra la capacidad de convertir consultas en lenguaje natural 
 1. Clona el repositorio:
 
     ```bash
-    git clone https://github.com/riemann-def/SmartQuery.git
-    cd SmartQuery
+    git clone git@github.com:Riemann-def/smart-query.git
+    cd smart-query
     ```
 
 2. Crea un archivo `.env` en el directorio `nlp-service` con tu clave de API de OpenAI:
