@@ -1,0 +1,80 @@
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./common:/app/common
+
+  nlp-service:
+    build: ./nlp-service
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydatabase
+    env_file:
+      - ./nlp-service/.env
+    volumes:
+      - ./common:/app/common
+
+  validation-service:
+    build: ./validation-service
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./common:/app/common
+    
+  execution-service:
+    build: ./execution-service
+    depends_on:
+      - rabbitmq
+      - db
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydatabase
+    volumes:
+      - ./common:/app/common
+    
+  formatting-service:
+    build: ./formatting-service
+    depends_on:
+      - rabbitmq
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+    volumes:
+      - ./common:/app/common
+
+  frontend:
+    build: ./frontend-service
+    ports:
+      - "8005:3000"
+
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db-init:/docker-entrypoint-initdb.d/
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"

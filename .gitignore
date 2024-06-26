@@ -1,0 +1,135 @@
+# General
+.DS_Store
+Thumbs.db
+
+# Python
+*.py[cod]
+__pycache__/
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+*.manifest
+*.spec
+*.lock
+*.log
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pytest
+.pytest_cache/
+
+# Coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+*.hypothesis
+
+# PyInstaller
+*.manifest
+*.spec
+
+# celery
+celerybeat-schedule
+celerybeat.pid
+
+# environments
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Flask
+instance/
+.webassets-cache
+
+# Scrapy
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.orig
+*~
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+package-lock.json
+yarn.lock
+
+# Logs
+logs/
+*.log
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+**/Dockerfile
+*.tar
+
+# Frontend build
+frontend/build/
+frontend/node_modules/
+
+# Custom service-specific ignores
+api-gateway/.env
+nlp-service/.env
+validation-service/.env
+execution-service/.env
+formatting-service/.env
+metadata-service/.env
+
+# Output files
+*.out
+*.class
+*.dll
+*.exe
+*.o
+*.pyc
+
+# System files
+.vscode/
+.idea/
+*.iml
+
+# Miscellaneous
+*.envrc
+*.env.*
+
