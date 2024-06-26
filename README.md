@@ -109,7 +109,7 @@ Las contribuciones son bienvenidas. Por favor sigue los siguientes pasos para co
 
 ## Contacto
 
-Para cualquier pregunta o problema, puedes contactarme a través de [tu-email@example.com](mailto:tu-email@example.com).
+Para cualquier pregunta o problema, puedes contactarme a través de [hola@markelramiro.com](mailto:hola@markelramiro.com).
 
 ---
 
