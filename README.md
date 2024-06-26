@@ -1,5 +1,7 @@
 # SmartQuery
 
+![Screenshot](assets/screenshot.PNG)
+
 SmartQuery es una aplicación avanzada que permite generar consultas SQL a partir de lenguaje natural utilizando varios microservicios desplegados con Docker y Docker Compose.
 
 ## Descripción
@@ -104,15 +106,6 @@ Las contribuciones son bienvenidas. Por favor sigue los siguientes pasos para co
 4. Haz push a la rama (`git push origin feature-nueva-funcionalidad`).
 5. Abre un Pull Request.
 
-## Problemas Comunes
-
-### Error: `Object of type Decimal is not JSON serializable`
-
-Este error ocurre cuando se intenta serializar un objeto `Decimal` directamente. Asegúrate de convertir los objetos `Decimal` a `float` antes de la serialización.
-
-### Error: `Object of type date is not JSON serializable`
-
-Este error ocurre cuando se intenta serializar un objeto `date` directamente. Asegúrate de convertir los objetos `date` a `str` en formato ISO antes de la serialización.
 
 ## Contacto
 
