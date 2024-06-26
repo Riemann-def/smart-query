@@ -101,7 +101,7 @@ logs/
 # Docker
 docker-compose.override.yml
 .dockerignore
-**/Dockerfile
+#**/Dockerfile
 *.tar
 
 # Frontend build
