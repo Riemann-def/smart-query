@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "metadata_service.py"]
+CMD ["python", "credentials_service.py"]

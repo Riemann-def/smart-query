@@ -33,6 +33,18 @@ async def handle_query(request: Request):
     connection.close()
     return JSONResponse(content={"message": "Query sent to NLP Service"})
 
+# Update the credentials (DB)
+@app.post("/credentials")
+async def update_credentials(request: Request):
+    data = await request.json()
+    connection = get_rabbitmq_connection(RABBITMQ_HOST)
+    channel = connection.channel()
+    channel.queue_declare(queue='credentials_queue')
+    channel.basic_publish(exchange='', routing_key='credentials_queue', body=json.dumps(data))
+    connection.close()
+    return JSONResponse(content={"message": "Credentials updated and metadata update requested"})
+
+
 @app.get("/events")
 async def handle_events(request: Request):
     async def event_generator():

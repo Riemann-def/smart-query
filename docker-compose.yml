@@ -41,10 +41,7 @@ services:
       - db
     environment:
       - RABBITMQ_HOST=rabbitmq
-      - DB_HOST=db
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_NAME=mydatabase
+      - MONGO_URI=mongodb://mongo:27017
     volumes:
       - ./common:/app/common
     
@@ -61,6 +58,43 @@ services:
     build: ./frontend-service
     ports:
       - "8005:3000"
+
+  credentials-service:
+    build: ./credentials-service
+    depends_on:
+      - rabbitmq
+      - mongo
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - MONGO_URI=mongodb://mongo:27017
+      # Configuración para la base de datos inicial (local)
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydatabase
+    volumes:
+      - ./common:/app/common
+
+  metadata-service:
+    build: ./metadata-service
+    depends_on:
+      - rabbitmq
+      - mongo
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - MONGO_URI=mongodb://mongo:27017
+      # Configuración para la base de datos inicial (local)
+      - DB_HOST=db
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=mydatabase
+    volumes:
+      - ./common:/app/common
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
 
   db:
     image: postgres

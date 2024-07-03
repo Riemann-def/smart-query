@@ -1,8 +1,8 @@
 import json
 import os
-import psycopg2
-import pika
 import logging
+import pika
+import uuid
 from openai import OpenAI
 from common.utils import get_rabbitmq_connection
 
@@ -12,87 +12,48 @@ logger = logging.getLogger(__name__)
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DB_HOST = os.getenv("DB_HOST")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_NAME = os.getenv("DB_NAME")
 
 # Configurar la clave de API de OpenAI
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def get_db_schema():
-    conn = psycopg2.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, dbname=DB_NAME)
-    cur = conn.cursor()
+def request_metadata():
+    connection = get_rabbitmq_connection(RABBITMQ_HOST)
+    channel = connection.channel()
+    result = channel.queue_declare(queue='', exclusive=True)
+    callback_queue = result.method.queue
 
-    # Obtener nombres de tablas y columnas
-    cur.execute("""
-    SELECT table_name, column_name, data_type 
-    FROM information_schema.columns 
-    WHERE table_schema = 'public'
-    """)
-    columns = cur.fetchall()
+    corr_id = str(uuid.uuid4())
+    channel.basic_publish(
+        exchange='',
+        routing_key='metadata_request_queue',
+        properties=pika.BasicProperties(
+            reply_to=callback_queue,
+            correlation_id=corr_id,
+        ),
+        body=json.dumps({})
+    )
 
-    # Obtener claves primarias
-    cur.execute("""
-    SELECT
-        tc.table_name, 
-        kcu.column_name
-    FROM 
-        information_schema.table_constraints AS tc 
-        JOIN information_schema.key_column_usage AS kcu
-          ON tc.constraint_name = kcu.constraint_name
-          AND tc.table_schema = kcu.table_schema
-    WHERE tc.constraint_type = 'PRIMARY KEY' AND tc.table_schema = 'public'
-    """)
-    primary_keys = cur.fetchall()
+    logger.info("Solicitud de metadatos enviada, esperando respuesta...")
 
-    # Obtener claves foráneas
-    cur.execute("""
-    SELECT
-        tc.table_name, 
-        kcu.column_name,
-        ccu.table_name AS foreign_table_name,
-        ccu.column_name AS foreign_column_name 
-    FROM 
-        information_schema.table_constraints AS tc 
-        JOIN information_schema.key_column_usage AS kcu
-          ON tc.constraint_name = kcu.constraint_name
-          AND tc.table_schema = kcu.table_schema
-        JOIN information_schema.constraint_column_usage AS ccu
-          ON ccu.constraint_name = tc.constraint_name
-    WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'
-    """)
-    foreign_keys = cur.fetchall()
-
-    schema = {}
-    for table_name, column_name, data_type in columns:
-        if table_name not in schema:
-            schema[table_name] = {
-                "columns": [],
-                "primary_keys": [],
-                "foreign_keys": []
-            }
-        schema[table_name]["columns"].append({"column_name": column_name, "data_type": data_type})
-
-    for table_name, column_name in primary_keys:
-        if table_name in schema:
-            schema[table_name]["primary_keys"].append(column_name)
-
-    for table_name, column_name, foreign_table_name, foreign_column_name in foreign_keys:
-        if table_name in schema:
-            schema[table_name]["foreign_keys"].append({
-                "column_name": column_name,
-                "foreign_table_name": foreign_table_name,
-                "foreign_column_name": foreign_column_name
-            })
-
-    cur.close()
-    conn.close()
-    return schema
+    for method_frame, properties, body in channel.consume(callback_queue, inactivity_timeout=10):
+        if properties.correlation_id == corr_id:
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            channel.queue_delete(callback_queue)
+            connection.close()
+            logger.info("Metadatos recibidos correctamente")
+            return json.loads(body)
+    else:
+        logger.error("No se recibió respuesta en el tiempo esperado")
+        channel.queue_delete(callback_queue)
+        connection.close()
+        return None
 
 def generate_sql(query, schema):
     schema_str = "Schema:\n"
     for table, details in schema.items():
+        if "columns" not in details:
+            logger.error(f"Missing 'columns' in table {table}")
+            continue
         schema_str += f"Table {table}: "
         schema_str += ", ".join([f"{col['column_name']} ({col['data_type']})" for col in details['columns']])
         schema_str += "\n"
@@ -111,7 +72,7 @@ def generate_sql(query, schema):
     Natural Language Query:
     {query}
 
-    Please make sure the SQL query accurately reflects the provided schema.
+    Please provide only the SQL query, without any additional text or headings. Ensure the SQL query accurately reflects the provided schema and is syntactically correct.
     """
 
     try:
@@ -134,7 +95,11 @@ def callback(ch, method, properties, body):
     data = json.loads(body)
     query = data.get("query")
 
-    schema = get_db_schema()
+    schema = request_metadata()
+    if schema is None:
+        logger.error("No se pudo obtener el esquema de la base de datos")
+        return
+
     sql_query = generate_sql(query, schema)
 
     connection = get_rabbitmq_connection(RABBITMQ_HOST)
